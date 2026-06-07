@@ -36,4 +36,11 @@ public class InMemoryDonacionesRepository implements DonacionesRepository {
   public void deleteById(String id) {
     donaciones.removeIf(donacion -> donacion.getId().equals(id));
   }
+
+  @Override
+  public List<Donacion> findByDonadorID(String donadorID) {
+    return donaciones.stream()
+        .filter(d -> d.getDonadorID().equals(donadorID))
+        .toList();
+  }
 }

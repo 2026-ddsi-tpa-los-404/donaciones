@@ -32,7 +32,7 @@ public class Donacion {
 
     private LocalDateTime fecha;
 
-    @OneToMany(mappedBy = "donacion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "donacion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<EstadoDonacion> historialEstados = new ArrayList<>();
 
     public String getId() { return id; }

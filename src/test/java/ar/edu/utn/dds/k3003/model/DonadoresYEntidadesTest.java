@@ -1,20 +1,19 @@
 package ar.edu.utn.dds.k3003.model;
 
 import ar.edu.utn.dds.k3003.Fachada;
-import lombok.SneakyThrows;
+import ar.edu.utn.dds.k3003.app.Application;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
+@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Transactional
 public class DonadoresYEntidadesTest {
 
+  @Autowired
   Fachada instancia;
-
-  @SneakyThrows
-  @BeforeEach
-  void setUp() {
-    instancia = new Fachada();
-  }
 
   @Test
   void testSiempreTrue() {

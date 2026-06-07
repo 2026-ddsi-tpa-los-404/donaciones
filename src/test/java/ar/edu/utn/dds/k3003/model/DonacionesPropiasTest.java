@@ -18,24 +18,27 @@ import ar.edu.utn.dds.k3003.exceptions.DonacionNoEncontradaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import ar.edu.utn.dds.k3003.app.Application;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Transactional
 public class DonacionesPropiasTest {
 
+  @Autowired
   Fachada instancia;
 
-  @Mock FachadaDonadoresYEntidades fachadaDonadoresYEntidades;
-  @Mock FachadaLogistica fachadaLogistica;
+  @MockitoBean FachadaDonadoresYEntidades fachadaDonadoresYEntidades;
+  @MockitoBean FachadaLogistica fachadaLogistica;
 
   DonadorDTO donadorEjemplo;
   DonacionDTO donacionEjemplo;
 
   @BeforeEach
   void setUp() {
-    instancia = new Fachada();
     instancia.setFachadaDonadoresYEntidades(fachadaDonadoresYEntidades);
     instancia.setFachadaLogistica(fachadaLogistica);
 
@@ -47,7 +50,6 @@ public class DonacionesPropiasTest {
             null, "donador1", "deposito1", "ropa de invierno", "producto1", 3, EstadoDonacionEnum.INGRESADA);
   }
 
-  // registrarDonacion: verifica que se asigna ID y el estado queda en INGRESADA
   @Test
   void registrarDonacionAsignaIDYEstadoIngresada() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -61,7 +63,6 @@ public class DonacionesPropiasTest {
     Assertions.assertEquals(EstadoDonacionEnum.INGRESADA, resultado.estado());
   }
 
-  // buscarDonacionPorID: una donacion registrada se puede encontrar por su ID
   @Test
   void buscarDonacionPorIDDevuelveLaDonacionCorrecta() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -76,7 +77,6 @@ public class DonacionesPropiasTest {
     Assertions.assertEquals("donador1", encontrada.donadorID());
   }
 
-  // buscarDonacionPorID: buscar un ID inexistente lanza excepcion
   @Test
   void buscarDonacionPorIDInexistenteLanzaExcepcion() {
     Assertions.assertThrows(
@@ -84,7 +84,6 @@ public class DonacionesPropiasTest {
         () -> instancia.buscarDonacionPorID("donacion-que-no-existe"));
   }
 
-  // cambiarEstadoDeDonacion: el estado se actualiza correctamente
   @Test
   void cambiarEstadoDeDonacionActualizaElEstado() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -98,7 +97,6 @@ public class DonacionesPropiasTest {
     Assertions.assertEquals(EstadoDonacionEnum.ACEPTADA, actualizada.estado());
   }
 
-  // buscarPorDonadorYFechaInicio: devuelve las donaciones del donador desde la fecha indicada
   @Test
   void buscarPorDonadorYFechaInicioDevuelveDonacionesFiltradas() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -115,7 +113,6 @@ public class DonacionesPropiasTest {
     Assertions.assertTrue(resultado.stream().anyMatch(d -> d.id().equals(registrada.id())));
   }
 
-  // buscarPorDonadorYFechaInicio: donador sin donaciones lanza excepcion
   @Test
   void buscarPorDonadorYFechaInicioSinDonacionesLanzaExcepcion() {
     Assertions.assertThrows(
@@ -123,7 +120,6 @@ public class DonacionesPropiasTest {
         () -> instancia.buscarPorDonadorYFechaInicio("donador-sin-donaciones", LocalDate.now()));
   }
 
-  // registrarQuejaEnDonacion: el estado final de la donacion es CONQUEJA
   @Test
   void registrarQuejaEnDonacionCambiaEstadoAConQueja() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -141,7 +137,6 @@ public class DonacionesPropiasTest {
     Assertions.assertEquals(EstadoDonacionEnum.CONQUEJA, conQueja.estado());
   }
 
-  // registrarDonacion: si el donador no puede donar, lanza excepcion
   @Test
   void registrarDonacionFallaSiDonadorNoPuedeDonar() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -152,7 +147,6 @@ public class DonacionesPropiasTest {
         () -> instancia.registrarDonacion(donacionEjemplo));
   }
 
-  // cambiarEstadoDeDonacion: donacion inexistente lanza excepcion
   @Test
   void cambiarEstadoDonacionInexistenteLanzaExcepcion() {
     Assertions.assertThrows(
@@ -160,7 +154,6 @@ public class DonacionesPropiasTest {
         () -> instancia.cambiarEstadoDeDonacion("id-que-no-existe", EstadoDonacionEnum.ACEPTADA));
   }
 
-  // cambiarEstadoDeDonacion: INGRESADA -> CONQUEJA es transicion invalida
   @Test
   void cambiarEstadoTransicionInvalidaIngresadaAConQuejaLanzaExcepcion() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -175,7 +168,6 @@ public class DonacionesPropiasTest {
         () -> instancia.cambiarEstadoDeDonacion(registrada.id(), EstadoDonacionEnum.CONQUEJA));
   }
 
-  // cambiarEstadoDeDonacion: ACEPTADA -> CONQUEJA es transicion valida
   @Test
   void cambiarEstadoTransicionAceptadaAConQuejaExitosa() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -191,7 +183,6 @@ public class DonacionesPropiasTest {
     Assertions.assertEquals(EstadoDonacionEnum.CONQUEJA, resultado.estado());
   }
 
-  // cambiarEstadoDeDonacion: no se puede volver a ACEPTADA si ya esta en CONQUEJA
   @Test
   void cambiarEstadoTransicionInvalidaConQuejaAAceptadaLanzaExcepcion() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -208,7 +199,6 @@ public class DonacionesPropiasTest {
         () -> instancia.cambiarEstadoDeDonacion(registrada.id(), EstadoDonacionEnum.ACEPTADA));
   }
 
-  // registrarQuejaEnDonacion: si agregarQueja falla, el estado NO cambia a CONQUEJA
   @Test
   void registrarQuejaFallidaNoModificaElEstado() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -229,7 +219,6 @@ public class DonacionesPropiasTest {
     Assertions.assertEquals(EstadoDonacionEnum.ACEPTADA, despues.estado());
   }
 
-  // listarDonaciones: las donaciones registradas aparecen en el listado
   @Test
   void listarDonacionesDevuelveDonacionesRegistradas() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -244,7 +233,6 @@ public class DonacionesPropiasTest {
     Assertions.assertTrue(lista.stream().anyMatch(d -> d.id().equals(registrada.id())));
   }
 
-  // eliminarDonacionPorID: la donacion eliminada no aparece en busqueda posterior
   @Test
   void eliminarDonacionPorIDEliminaDonacion() {
     when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
@@ -259,7 +247,6 @@ public class DonacionesPropiasTest {
     Assertions.assertThrows(RuntimeException.class, () -> instancia.buscarDonacionPorID(idRegistrada));
   }
 
-  // eliminarDonacionPorID: eliminar ID inexistente lanza excepcion
   @Test
   void eliminarDonacionPorIDInexistenteLanzaExcepcion() {
     Assertions.assertThrows(RuntimeException.class, () -> instancia.eliminarDonacionPorID("id-inexistente"));

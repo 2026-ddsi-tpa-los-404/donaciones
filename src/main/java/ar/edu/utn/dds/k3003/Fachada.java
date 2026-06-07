@@ -20,8 +20,8 @@ import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.CategoriaDTO;
 import ar.edu.utn.dds.k3003.model.Categoria;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.CategoriasDataMapper;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.IdentificadoresDataMapper;
-import ar.edu.utn.dds.k3003.repositories.InMemory.InMemoryCategoriaRepository;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.ProductosDataMapper;
+import ar.edu.utn.dds.k3003.repositories.InMemory.InMemoryCategoriaRepository;
 import ar.edu.utn.dds.k3003.repositories.InMemory.InMemoryDonacionesRepository;
 import ar.edu.utn.dds.k3003.repositories.InMemory.InMemoryIdentificadorRepository;
 import ar.edu.utn.dds.k3003.repositories.InMemory.InMemoryProductoRepository;
@@ -60,6 +60,21 @@ public class Fachada implements FachadaDonaciones {
     this.categoriasDataMapper = new CategoriasDataMapper();
   }
 
+  public Fachada(
+      DonacionesRepository donacionesRepository,
+      ProductoRepository productoRepository,
+      IdentificadorRepository identificadorRepository,
+      CategoriaRepository categoriaRepository) {
+    this.donacionesRepository = donacionesRepository;
+    this.donacionesDataMapper = new DonacionesDataMapper();
+    this.productoRepository = productoRepository;
+    this.productosDataMapper = new ProductosDataMapper();
+    this.identificadorRepository = identificadorRepository;
+    this.identificadoresDataMapper = new IdentificadoresDataMapper();
+    this.categoriaRepository = categoriaRepository;
+    this.categoriasDataMapper = new CategoriasDataMapper();
+  }
+
   @Override
   public DonacionDTO registrarDonacion(DonacionDTO donacionDTO) {
     if (donacionDTO == null){
@@ -82,7 +97,7 @@ public class Fachada implements FachadaDonaciones {
     this.cambiarEstado(donacion , EstadoDonacionEnum.INGRESADA);
     donacion.setFecha(LocalDateTime.now());
 
-    this.donacionesRepository.save(donacion);
+    donacion = this.donacionesRepository.save(donacion);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
 
@@ -109,19 +124,23 @@ public class Fachada implements FachadaDonaciones {
       throw new IllegalArgumentException("Para cambiar a CONQUEJA el estado previo debe ser ACEPTADA.");
     }
 
-    this.cambiarEstado(donacion , estado );
+    this.cambiarEstado(donacion, estado);
+    donacion = this.donacionesRepository.save(donacion);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
 
   @Override
   public List<DonacionDTO> buscarPorDonadorYFechaInicio(String donadorID, LocalDate fecha) throws DonacionNoEncontradaException {
-    List<Donacion> donaciones = this.donacionesRepository.findAll().stream().filter(don -> don.getDonadorID().equals(donadorID)).collect(Collectors.toList());
+    List<Donacion> donaciones = this.donacionesRepository.findByDonadorID(donadorID);
 
     if (donaciones.isEmpty()){
       throw new DonacionNoEncontradaException("No existe una donacion con ese ID y Fecha.");
     }
 
-    return donaciones.stream().filter(don -> !don.getFecha().toLocalDate().isBefore(fecha)).map(don -> this.donacionesDataMapper.toDonacionDTO(don)).collect(Collectors.toList());
+    return donaciones.stream()
+        .filter(don -> !don.getFecha().toLocalDate().isBefore(fecha))
+        .map(donacionesDataMapper::toDonacionDTO)
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -134,7 +153,8 @@ public class Fachada implements FachadaDonaciones {
 
     this.fachadaDonadoresYEntidades.agregarQueja(new QuejaDTO(null, donacionID, donacion.getDonadorID(), null , descripcion ));
 
-    this.cambiarEstado(donacion , EstadoDonacionEnum.CONQUEJA);
+    this.cambiarEstado(donacion, EstadoDonacionEnum.CONQUEJA);
+    donacion = this.donacionesRepository.save(donacion);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
 
@@ -187,6 +207,7 @@ public class Fachada implements FachadaDonaciones {
     producto.setDescripcion(productoDTO.descripcion());
     producto.setSubCategoriaID(productoDTO.categoriaID());
     producto.setIdentificadorID(productoDTO.identificadorID());
+    producto = this.productoRepository.save(producto);
     return productosDataMapper.toProductoDTO(producto);
   }
 
@@ -285,6 +306,7 @@ public class Fachada implements FachadaDonaciones {
     EstadoDonacion registro = new EstadoDonacion();
     registro.setEstado(nuevoEstado);
     registro.setTiempo(LocalDateTime.now());
+    registro.setDonacion(donacion);
 
     donacion.getHistorialEstados().add(registro);
   }

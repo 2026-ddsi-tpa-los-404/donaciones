@@ -13,4 +13,6 @@ public interface DonacionesRepository {
   List<Donacion> findAll();
 
   void deleteById(String id);
+
+  List<Donacion> findByDonadorID(String donadorID);
 }
