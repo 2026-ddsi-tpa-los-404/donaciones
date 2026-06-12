@@ -18,7 +18,6 @@ import ar.edu.utn.dds.k3003.model.Producto;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.DonacionesDataMapper;
 import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.CategoriaDTO;
 import ar.edu.utn.dds.k3003.model.Categoria;
-import java.util.UUID;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.CategoriasDataMapper;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.IdentificadoresDataMapper;
 import ar.edu.utn.dds.k3003.repositories.DataMapper.ProductosDataMapper;
@@ -92,15 +91,13 @@ public class Fachada implements FachadaDonaciones {
       throw new DonadorNoPuedeDonarException("El Donador no esta habilitado para esta operacion.");
     }
 
-    String donacionID = UUID.randomUUID().toString();
-    this.fachadaLogistica.gestionarDonacion(donacionDTO.depositoID(), donacionID, donacionDTO.productoID(), donacionDTO.cantidad());
-
     Donacion donacion = this.donacionesDataMapper.toDonacion(donacionDTO);
-    donacion.setId(donacionID);
     this.cambiarEstado(donacion , EstadoDonacionEnum.INGRESADA);
     donacion.setFecha(LocalDateTime.now());
-
     donacion = this.donacionesRepository.save(donacion);
+
+    this.fachadaLogistica.gestionarDonacion(donacion.getDepositoID(), donacion.getId(), donacion.getProductoID(), donacion.getCantidad());
+
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
 
