@@ -67,7 +67,11 @@ public class DonadoresRestClient implements FachadaDonadoresYEntidades {
   @Override
   public QuejaDTO agregarQueja(QuejaDTO quejaDTO) throws NoSuchElementException {
     try {
-      return restTemplate.postForObject(baseUrl + "/quejas", quejaDTO, QuejaDTO.class);
+      Map<String, Object> body = new java.util.HashMap<>();
+      body.put("donacionID", quejaDTO.donacionID());
+      body.put("descripcion", quejaDTO.descripcion());
+      return restTemplate.postForObject(
+          baseUrl + "/donadores/" + quejaDTO.donadorID() + "/quejas", body, QuejaDTO.class);
     } catch (HttpClientErrorException.NotFound e) {
       throw new NoSuchElementException("Donador no encontrado al registrar queja");
     }
