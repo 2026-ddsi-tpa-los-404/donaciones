@@ -1,17 +1,24 @@
 package ar.edu.utn.dds.k3003.model;
 
 import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.EstadoDonacionEnum;
+import ar.edu.utn.dds.k3003.model.generator.SequentialStringIdGenerator;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "donaciones")
 public class Donacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(generator = "donaciones_id_gen")
+    @GenericGenerator(
+        name = "donaciones_id_gen",
+        type = SequentialStringIdGenerator.class,
+        parameters = @Parameter(name = "sequence_name", value = "donaciones_id_seq"))
     private String id;
 
     @Column(name = "donador_id")

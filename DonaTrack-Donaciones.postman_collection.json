@@ -1,0 +1,260 @@
+{
+  "info": {
+    "name": "DonaTrack - Módulo Donaciones",
+    "_postman_id": "donaciones-entrega3-2026",
+    "description": "Demo Entrega 3 - Módulo Donaciones\nRender: {{base_url}}\n\nFlujos:\n1. Registrar Donación (integración completa)\n2. Cambiar estado a ACEPTADA\n3. Procesar al donador (Incentivos)\n4. Estadísticas de donador\n5. Queja + Baneo (traer donador con 9 quejas pre-cargadas)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",         "value": "https://marco-maggio-springboot-api-entrega2-dsi.onrender.com" },
+    { "key": "donadores_url",    "value": "https://donadores-y-entidades-0uv4.onrender.com" },
+    { "key": "incentivos_url",   "value": "COMPLETAR_CON_URL_DE_INCENTIVOS" },
+    { "key": "producto_id",      "value": "" },
+    { "key": "donador_id",       "value": "COMPLETAR_CON_ID_DE_DONADOR" },
+    { "key": "deposito_id",      "value": "COMPLETAR_CON_ID_DE_DEPOSITO" },
+    { "key": "donacion_id",      "value": "" },
+    { "key": "donacion_queja_id","value": "" },
+    { "key": "donador_baneo_id", "value": "COMPLETAR_CON_ID_DE_DONADOR_9_QUEJAS" },
+    { "key": "insignia_id",      "value": "" },
+    { "key": "mision_id",        "value": "" }
+  ],
+  "item": [
+    {
+      "name": "⚙️ Admin",
+      "item": [
+        {
+          "name": "GET Health — Donaciones",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/actuator/health", "host": ["{{base_url}}"], "path": ["actuator","health"] }
+          }
+        },
+        {
+          "name": "GET Health — Donadores",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{donadores_url}}/actuator/health", "host": ["{{donadores_url}}"], "path": ["actuator","health"] }
+          }
+        },
+        {
+          "name": "GET Health — Incentivos",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{incentivos_url}}/actuator/health", "host": ["{{incentivos_url}}"], "path": ["actuator","health"] }
+          }
+        },
+        {
+          "name": "PRE-CARGA: POST Producto (guardar producto_id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var resp = pm.response.json();",
+                  "  pm.collectionVariables.set('producto_id', resp.id);",
+                  "  console.log('producto_id guardado:', resp.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Arroz 1kg\",\n  \"descripcion\": \"Alimento no perecedero bolsa un kilo\",\n  \"categoriaID\": null,\n  \"identificadorID\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/productos", "host": ["{{base_url}}"], "path": ["productos"] }
+          }
+        },
+        {
+          "name": "GET Todas las donaciones",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/donaciones", "host": ["{{base_url}}"], "path": ["donaciones"] }
+          }
+        },
+        {
+          "name": "GET Productos cargados",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/productos", "host": ["{{base_url}}"], "path": ["productos"] }
+          }
+        },
+        {
+          "name": "DELETE Reset DB (borra todo)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/admin/reset", "host": ["{{base_url}}"], "path": ["admin","reset"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔵 Flujo 1 — Registrar Donación (completo)",
+      "item": [
+        {
+          "name": "POST Registrar Donación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var resp = pm.response.json();",
+                  "  pm.collectionVariables.set('donacion_id', resp.id);",
+                  "  pm.test('Donación creada con estado INGRESADA', () => {",
+                  "    pm.expect(resp.estado).to.eql('INGRESADA');",
+                  "  });",
+                  "  console.log('donacion_id guardado:', resp.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"donadorID\": \"{{donador_id}}\",\n  \"depositoID\": \"{{deposito_id}}\",\n  \"descripcion\": \"Donación de arroz para demo\",\n  \"productoID\": \"{{producto_id}}\",\n  \"cantidad\": 5\n}"
+            },
+            "url": { "raw": "{{base_url}}/donaciones", "host": ["{{base_url}}"], "path": ["donaciones"] }
+          }
+        },
+        {
+          "name": "GET Verificar donación creada",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/donaciones/{{donacion_id}}", "host": ["{{base_url}}"], "path": ["donaciones","{{donacion_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚚 Flujo 2 — Reportar Entrega (cambiar estado)",
+      "item": [
+        {
+          "name": "PATCH Cambiar estado a ACEPTADA",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ACEPTADA\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/donaciones/{{donacion_id}}/estado", "host": ["{{base_url}}"], "path": ["donaciones","{{donacion_id}}","estado"] }
+          }
+        },
+        {
+          "name": "GET Ver donación con estado actualizado",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/donaciones/{{donacion_id}}", "host": ["{{base_url}}"], "path": ["donaciones","{{donacion_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Flujo 4 — Estadísticas de Donador",
+      "item": [
+        {
+          "name": "GET Donaciones de un donador desde fecha",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/donaciones/search?donadorID=2&fechaInicio=2026-01-01",
+              "host": ["{{base_url}}"],
+              "path": ["donaciones","search"],
+              "query": [
+                { "key": "donadorID",   "value": "2" },
+                { "key": "fechaInicio", "value": "2026-01-01" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚠️ Flujo 5 — Queja + Baneo (donador con 9 quejas previas)",
+      "item": [
+        {
+          "name": "1. POST Donación para el donador con 9 quejas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  var resp = pm.response.json();",
+                  "  pm.collectionVariables.set('donacion_queja_id', resp.id);",
+                  "  console.log('donacion_queja_id:', resp.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"donadorID\": \"{{donador_baneo_id}}\",\n  \"depositoID\": \"DEP-CENTRAL\",\n  \"descripcion\": \"Donación demo baneo\",\n  \"productoID\": \"{{producto_id}}\",\n  \"cantidad\": 2\n}"
+            },
+            "url": { "raw": "{{base_url}}/donaciones", "host": ["{{base_url}}"], "path": ["donaciones"] }
+          }
+        },
+        {
+          "name": "2. POST Registrar 10ª queja → donador pasa a BANEADO",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Décima queja - producto llegó en mal estado\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/donaciones/{{donacion_queja_id}}/queja", "host": ["{{base_url}}"], "path": ["donaciones","{{donacion_queja_id}}","queja"] }
+          }
+        },
+        {
+          "name": "3. GET Verificar donación en estado CONQUEJA",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/donaciones/{{donacion_queja_id}}", "host": ["{{base_url}}"], "path": ["donaciones","{{donacion_queja_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Consultas varias",
+      "item": [
+        {
+          "name": "GET Donación por ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/donaciones/{{donacion_id}}", "host": ["{{base_url}}"], "path": ["donaciones","{{donacion_id}}"] }
+          }
+        },
+        {
+          "name": "GET Categorías",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/categorias", "host": ["{{base_url}}"], "path": ["categorias"] }
+          }
+        },
+        {
+          "name": "GET Identificadores",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/identificadores", "host": ["{{base_url}}"], "path": ["identificadores"] }
+          }
+        }
+      ]
+    }
+  ]
+}

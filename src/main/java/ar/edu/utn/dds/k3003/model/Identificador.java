@@ -1,14 +1,21 @@
 package ar.edu.utn.dds.k3003.model;
 
 import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.TipoIdentificadorEnum;
+import ar.edu.utn.dds.k3003.model.generator.SequentialStringIdGenerator;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "identificadores")
 public class Identificador {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(generator = "identificadores_id_gen")
+    @GenericGenerator(
+        name = "identificadores_id_gen",
+        type = SequentialStringIdGenerator.class,
+        parameters = @Parameter(name = "sequence_name", value = "identificadores_id_seq"))
     private String id;
 
     @Enumerated(EnumType.STRING)

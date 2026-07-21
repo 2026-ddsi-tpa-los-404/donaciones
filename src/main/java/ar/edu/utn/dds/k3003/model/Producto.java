@@ -1,13 +1,20 @@
 package ar.edu.utn.dds.k3003.model;
 
+import ar.edu.utn.dds.k3003.model.generator.SequentialStringIdGenerator;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Table(name = "productos")
 public class Producto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(generator = "productos_id_gen")
+    @GenericGenerator(
+        name = "productos_id_gen",
+        type = SequentialStringIdGenerator.class,
+        parameters = @Parameter(name = "sequence_name", value = "productos_id_seq"))
     private String id;
 
     private String nombre;
