@@ -5,6 +5,7 @@ import ar.edu.utn.dds.k3003.api.model.EstadoDonacionRequest;
 import ar.edu.utn.dds.k3003.api.model.QuejaRequest;
 import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.DonacionDTO;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -39,12 +40,27 @@ public class DonacionController {
     return fachada.listarDonaciones();
   }
 
+  /**
+   * El tiempo total incluye la notificacion sincronica a Logistica, que desde
+   * la Entrega 4 encola el trabajo de asignacion internamente. Medir la
+   * duracion completa permite detectar si esa integracion empieza a demorar
+   * o a fallar, sin depender de metricas propias de Logistica.
+   */
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public DonacionDTO registrar(@RequestBody DonacionDTO donacionDTO) {
-    DonacionDTO resultado = fachada.registrarDonacion(donacionDTO);
-    meterRegistry.counter("donaciones.registradas").increment();
-    return resultado;
+    Timer.Sample muestra = Timer.start(meterRegistry);
+    String resultado = "exitoso";
+    try {
+      DonacionDTO donacionRegistrada = fachada.registrarDonacion(donacionDTO);
+      meterRegistry.counter("donaciones.registradas").increment();
+      return donacionRegistrada;
+    } catch (RuntimeException e) {
+      resultado = "error";
+      throw e;
+    } finally {
+      muestra.stop(meterRegistry.timer("donaciones.registro.duracion", "resultado", resultado));
+    }
   }
 
   @GetMapping("/search")
