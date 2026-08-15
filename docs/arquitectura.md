@@ -59,7 +59,7 @@ expuesto. No se agregó un endpoint nuevo porque el existente ya distingue
 sequenceDiagram
     participant Bot as Bot Telegram / Cliente
     participant DYE as Donadores y Entidades
-    participant DON as Donaciones (este módulo)
+    participant DON as Donaciones
     participant LOG as Logística
 
     Bot->>DYE: Alta de necesidad
