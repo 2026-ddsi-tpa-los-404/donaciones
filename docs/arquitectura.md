@@ -78,7 +78,7 @@ sequenceDiagram
 ### 2. Registro de donación y notificación a Logística
 
 El flujo de alta de una donación no cambió del lado de Donaciones. Lo relevante
-para esta entrega es que la llamada a `gestionarDonacion` es con cola de Workers:
+para esta entrega es que la llamada a `gestionarDonacion` conecta con cola de Workers de Logística:
 Donaciones no interpreta ni depende del cuerpo de la respuesta de Logística, por
 lo que el pasaje de Logística a un modelo de stock + cola de trabajo no requiere ningún cambio en este módulo.
 
