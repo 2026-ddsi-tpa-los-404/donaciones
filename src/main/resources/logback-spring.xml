@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!--
+      Trae la API key de Datadog ya configurada para metricas (application.properties)
+      para reusarla en logs, evitando dar de alta otra cuenta de observabilidad
+      solo para esto. Si en algun ambiente se quiere loguear solo por consola,
+      alcanza con no setear DATADOG_API_KEY / dejar la property vacia.
+    -->
+    <springProperty scope="context" name="ddApiKey" source="management.datadog.metrics.export.api-key" defaultValue=""/>
+    <springProperty scope="context" name="ddService" source="management.metrics.tags.application" defaultValue="donaciones"/>
+    <springProperty scope="context" name="ddEnv" source="management.metrics.tags.env" defaultValue="local"/>
+    <springProperty scope="context" name="ddSite" source="management.datadog.logs.site" defaultValue="us5.datadoghq.com"/>
+
+    <!--
+      %logger{36}.%method:%line agrega metodo y linea exactos desde donde se
+      logueo, ademas de la clase. Tiene costo real (Logback arma un stacktrace
+      por linea para ubicar el caller) pero para el volumen de este TP es
+      insignificante y ayuda mucho a debuggear.
+    -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%method:%line [trace=%X{traceId} instance=%X{instanceId} req=%X{requestId}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+      El appender de Datadog solo se activa si hay una API key definida. Igual
+      que en logback-spring.xml del repo de referencia (Better Stack), el <if>
+      tiene que envolver el <root> completo: anidarlo DENTRO de un <root> no
+      esta soportado y tira el warning "IfNestedWithinSecondPhaseElementSC".
+    -->
+    <if condition='!property("ddApiKey").equals("")'>
+        <then>
+            <appender name="DATADOG_SYNC" class="ar.edu.utn.dds.k3003.logging.DatadogLogsAppender">
+                <apiKey>${ddApiKey}</apiKey>
+                <site>${ddSite}</site>
+                <service>${ddService}</service>
+                <env>${ddEnv}</env>
+            </appender>
+
+            <!-- Async para que el POST HTTP a Datadog no bloquee el hilo del request. -->
+            <appender name="DATADOG" class="ch.qos.logback.classic.AsyncAppender">
+                <queueSize>512</queueSize>
+                <discardingThreshold>0</discardingThreshold>
+                <neverBlock>true</neverBlock>
+                <appender-ref ref="DATADOG_SYNC"/>
+            </appender>
+
+            <root level="INFO">
+                <appender-ref ref="CONSOLE"/>
+                <appender-ref ref="DATADOG"/>
+            </root>
+        </then>
+        <else>
+            <root level="INFO">
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </else>
+    </if>
+
+</configuration>

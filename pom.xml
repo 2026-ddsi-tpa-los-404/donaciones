@@ -107,6 +107,13 @@
       <artifactId>micrometer-registry-datadog</artifactId>
     </dependency>
 
+    <!-- Necesario para el <if> condicional de logback-spring.xml (logging centralizado) -->
+    <dependency>
+      <groupId>org.codehaus.janino</groupId>
+      <artifactId>janino</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
   </dependencies>
 
   <build>

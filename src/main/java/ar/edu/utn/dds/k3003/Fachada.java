@@ -35,8 +35,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Fachada implements FachadaDonaciones {
+
+  private static final Logger log = LoggerFactory.getLogger(Fachada.class);
 
   private final DonacionesRepository donacionesRepository;
   private final DonacionesDataMapper donacionesDataMapper;
@@ -83,11 +87,15 @@ public class Fachada implements FachadaDonaciones {
     if (donacionDTO.id() != null){
       throw new IllegalArgumentException("La donacion ya fue generada.");
     }
+    log.info("Registrando donacion para donadorID={} productoID={} cantidad={}",
+        donacionDTO.donadorID(), donacionDTO.productoID(), donacionDTO.cantidad());
+
     this.fachadaDonadoresYEntidades.buscarDonadorPorID(donacionDTO.donadorID());
 
     Boolean puedeDonar = this.fachadaDonadoresYEntidades.puedeDonar(donacionDTO.donadorID());
 
     if (!puedeDonar) {
+      log.warn("Donacion rechazada: donadorID={} no esta habilitado para donar", donacionDTO.donadorID());
       throw new DonadorNoPuedeDonarException("El Donador no esta habilitado para esta operacion.");
     }
 
@@ -97,6 +105,8 @@ public class Fachada implements FachadaDonaciones {
     donacion = this.donacionesRepository.save(donacion);
 
     this.fachadaLogistica.gestionarDonacion(donacion.getDepositoID(), donacion.getId(), donacion.getProductoID(), donacion.getCantidad());
+
+    log.info("Donacion {} registrada e informada a Logistica (depositoID={})", donacion.getId(), donacion.getDepositoID());
 
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
@@ -126,6 +136,7 @@ public class Fachada implements FachadaDonaciones {
 
     this.cambiarEstado(donacion, estado);
     donacion = this.donacionesRepository.save(donacion);
+    log.info("Donacion {} cambio de estado a {}", donacionID, estado);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
 
@@ -151,10 +162,13 @@ public class Fachada implements FachadaDonaciones {
 
     Donacion donacion = this.donacionesRepository.findById(donacionID).orElseThrow(() -> new DonacionNoEncontradaException("Donacion no Encontrada."));
 
+    log.info("Registrando queja sobre donacion {} (donadorID={})", donacionID, donacion.getDonadorID());
+
     this.fachadaDonadoresYEntidades.agregarQueja(new QuejaDTO(null, donacionID, donacion.getDonadorID(), null , descripcion ));
 
     this.cambiarEstado(donacion, EstadoDonacionEnum.CONQUEJA);
     donacion = this.donacionesRepository.save(donacion);
+    log.info("Queja registrada, donacion {} paso a CONQUEJA", donacionID);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
 

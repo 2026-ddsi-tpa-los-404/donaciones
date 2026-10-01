@@ -5,6 +5,7 @@ import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonadoresYEntidades;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaLogistica;
 import ar.edu.utn.dds.k3003.integration.DonadoresRestClient;
 import ar.edu.utn.dds.k3003.integration.LogisticaRestClient;
+import ar.edu.utn.dds.k3003.logging.TraceIdPropagationInterceptor;
 import ar.edu.utn.dds.k3003.repositories.jpa.CategoriaJpaRepository;
 import ar.edu.utn.dds.k3003.repositories.jpa.DonacionesJpaRepository;
 import ar.edu.utn.dds.k3003.repositories.jpa.IdentificadorJpaRepository;
@@ -26,8 +27,11 @@ public class AppConfig {
   private String logisticaUrl;
 
   @Bean
-  public RestTemplate restTemplate(RestTemplateBuilder builder) {
-    return builder.requestFactory(() -> new HttpComponentsClientHttpRequestFactory()).build();
+  public RestTemplate restTemplate(RestTemplateBuilder builder, TraceIdPropagationInterceptor traceIdInterceptor) {
+    return builder
+        .requestFactory(() -> new HttpComponentsClientHttpRequestFactory())
+        .interceptors(traceIdInterceptor)
+        .build();
   }
 
   @Bean
