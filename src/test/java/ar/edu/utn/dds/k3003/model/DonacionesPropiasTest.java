@@ -47,7 +47,7 @@ public class DonacionesPropiasTest {
             "donador1", "Juan", "Perez", 5, "juan@mail.com", "123", "Buenos Aires", null, "dni1");
     donacionEjemplo =
         new DonacionDTO(
-            null, "donador1", "deposito1", "ropa de invierno", "producto1", 3, EstadoDonacionEnum.INGRESADA);
+            null, "donador1", "deposito1", "ropa de invierno", "producto1", 3, EstadoDonacionEnum.INGRESADA, null);
   }
 
   @Test

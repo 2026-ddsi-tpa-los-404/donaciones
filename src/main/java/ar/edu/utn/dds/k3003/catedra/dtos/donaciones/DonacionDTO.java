@@ -1,5 +1,7 @@
 package ar.edu.utn.dds.k3003.catedra.dtos.donaciones;
 
+import java.time.LocalDateTime;
+
 public record DonacionDTO(
     String id,
     String donadorID,
@@ -7,4 +9,5 @@ public record DonacionDTO(
     String descripcion,
     String productoID,
     Integer cantidad,
-    EstadoDonacionEnum estado) {}
+    EstadoDonacionEnum estado,
+    LocalDateTime fecha) {}

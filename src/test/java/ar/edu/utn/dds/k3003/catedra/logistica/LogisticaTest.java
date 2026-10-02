@@ -220,7 +220,8 @@ public class LogisticaTest {
                 "descripcion1",
                 paqueteEjemplo.producto(),
                 paqueteEjemplo.cantidad(),
-                EstadoDonacionEnum.ACEPTADA));
+                EstadoDonacionEnum.ACEPTADA,
+                null));
     when(fachadaDonadoresYEntidades.satisfacerNecesidad("necesidad1", paqueteEjemplo.cantidad()))
         .thenReturn(necesidadDeEjemplo);
 

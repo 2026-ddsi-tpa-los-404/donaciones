@@ -63,7 +63,8 @@ public class DonacionesTest {
             "descripcion1",
             productoRetorno.id(),
             5,
-            EstadoDonacionEnum.INGRESADA);
+            EstadoDonacionEnum.INGRESADA,
+            null);
     donacionAceptadaEjemplo =
         new DonacionDTO(
             null,
@@ -72,7 +73,8 @@ public class DonacionesTest {
             "descripcion1",
             productoRetorno.id(),
             5,
-            EstadoDonacionEnum.ACEPTADA);
+            EstadoDonacionEnum.ACEPTADA,
+            null);
     donadorEjemplo =
         new DonadorDTO(
             "donador1",

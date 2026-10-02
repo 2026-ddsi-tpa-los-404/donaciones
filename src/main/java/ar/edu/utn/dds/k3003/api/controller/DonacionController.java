@@ -4,9 +4,12 @@ import ar.edu.utn.dds.k3003.Fachada;
 import ar.edu.utn.dds.k3003.api.model.EstadoDonacionRequest;
 import ar.edu.utn.dds.k3003.api.model.QuejaRequest;
 import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.DonacionDTO;
+import ar.edu.utn.dds.k3003.catedra.dtos.donaciones.EstadoDonacionEnum;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -54,6 +57,7 @@ public class DonacionController {
     try {
       DonacionDTO donacionRegistrada = fachada.registrarDonacion(donacionDTO);
       meterRegistry.counter("donaciones.registradas").increment();
+      meterRegistry.summary("donaciones.cantidad.donada").record(donacionRegistrada.cantidad());
       return donacionRegistrada;
     } catch (RuntimeException e) {
       resultado = "error";
@@ -76,6 +80,13 @@ public class DonacionController {
     meterRegistry
         .counter("donaciones.estado.cambiado", "estado", body.estado().name())
         .increment();
+    if (body.estado() == EstadoDonacionEnum.ACEPTADA && resultado.fecha() != null) {
+      // "fecha" es la de ingreso (nunca se reescribe), asi que esto mide cuanto
+      // tardo la donacion en pasar por todo el circuito de matchmaking de
+      // Logistica hasta quedar aceptada.
+      Duration tiempoHastaAceptada = Duration.between(resultado.fecha(), LocalDateTime.now());
+      meterRegistry.timer("donaciones.tiempo.hasta.aceptada").record(tiempoHastaAceptada);
+    }
     return resultado;
   }
 

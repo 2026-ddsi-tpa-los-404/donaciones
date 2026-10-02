@@ -14,7 +14,8 @@ public class DonacionesDataMapper {
         donacion.getDescripcion(),
         donacion.getProductoID(),
         donacion.getCantidad(),
-        donacion.getEstado());
+        donacion.getEstado(),
+        donacion.getFecha());
   }
 
   public Donacion toDonacion(DonacionDTO dto) {
