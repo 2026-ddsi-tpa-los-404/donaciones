@@ -14,6 +14,7 @@ import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonadoresYEntidades;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaLogistica;
 import java.time.LocalDate;
 import java.util.List;
+import ar.edu.utn.dds.k3003.exceptions.DepositoSinCapacidadException;
 import ar.edu.utn.dds.k3003.exceptions.DonacionNoEncontradaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -250,5 +251,21 @@ public class DonacionesPropiasTest {
   @Test
   void eliminarDonacionPorIDInexistenteLanzaExcepcion() {
     Assertions.assertThrows(RuntimeException.class, () -> instancia.eliminarDonacionPorID("id-inexistente"));
+  }
+
+  @Test
+  void registrarDonacionRechazadaPorLogisticaNoQuedaGuardada() {
+    when(fachadaDonadoresYEntidades.buscarDonadorPorID("donador1")).thenReturn(donadorEjemplo);
+    when(fachadaDonadoresYEntidades.puedeDonar("donador1")).thenReturn(Boolean.TRUE);
+    when(fachadaLogistica.gestionarDonacion(any(), any(), any(), anyInt()))
+        .thenThrow(new DepositoSinCapacidadException("sin capacidad"));
+
+    Assertions.assertThrows(
+        DepositoSinCapacidadException.class,
+        () -> instancia.registrarDonacion(donacionEjemplo));
+
+    Assertions.assertThrows(
+        DonacionNoEncontradaException.class,
+        () -> instancia.buscarPorDonadorYFechaInicio("donador1", LocalDate.now().minusDays(1)));
   }
 }

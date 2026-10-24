@@ -104,7 +104,14 @@ public class Fachada implements FachadaDonaciones {
     donacion.setFecha(LocalDateTime.now());
     donacion = this.donacionesRepository.save(donacion);
 
-    this.fachadaLogistica.gestionarDonacion(donacion.getDepositoID(), donacion.getId(), donacion.getProductoID(), donacion.getCantidad());
+    try {
+      this.fachadaLogistica.gestionarDonacion(donacion.getDepositoID(), donacion.getId(), donacion.getProductoID(), donacion.getCantidad());
+    } catch (RuntimeException e) {
+      // Si Logística rechaza la donación, no puede quedar registrada como INGRESADA sin depósito.
+      log.warn("Logistica rechazo la donacion {}: {}. Se descarta el registro", donacion.getId(), e.getMessage());
+      this.donacionesRepository.deleteById(donacion.getId());
+      throw e;
+    }
 
     log.info("Donacion {} registrada e informada a Logistica (depositoID={})", donacion.getId(), donacion.getDepositoID());
 

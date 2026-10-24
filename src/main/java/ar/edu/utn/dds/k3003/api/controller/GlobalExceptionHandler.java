@@ -1,5 +1,6 @@
 package ar.edu.utn.dds.k3003.api.controller;
 
+import ar.edu.utn.dds.k3003.exceptions.DepositoSinCapacidadException;
 import ar.edu.utn.dds.k3003.exceptions.DonacionNoEncontradaException;
 import ar.edu.utn.dds.k3003.exceptions.DonadorNoPuedeDonarException;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -29,6 +30,13 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public String handleNoPuedeDonar(DonadorNoPuedeDonarException e) {
     meterRegistry.counter("donaciones.errores", "tipo", "donador_no_habilitado").increment();
+    return e.getMessage();
+  }
+
+  @ExceptionHandler(DepositoSinCapacidadException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public String handleSinCapacidad(DepositoSinCapacidadException e) {
+    meterRegistry.counter("donaciones.errores", "tipo", "deposito_sin_capacidad").increment();
     return e.getMessage();
   }
 

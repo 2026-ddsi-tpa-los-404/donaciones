@@ -8,6 +8,7 @@ import ar.edu.utn.dds.k3003.catedra.dtos.logistica.TipoAlgoritmoEnum;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonaciones;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonadoresYEntidades;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaLogistica;
+import ar.edu.utn.dds.k3003.exceptions.DepositoSinCapacidadException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,9 @@ public class LogisticaRestClient implements FachadaLogistica {
           baseUrl + "/depositos/" + depositoID + "/donacion", body, DepositoDTO.class);
     } catch (HttpClientErrorException.NotFound e) {
       throw new NoSuchElementException("Deposito no encontrado: " + depositoID);
+    } catch (HttpClientErrorException.Conflict e) {
+      throw new DepositoSinCapacidadException(
+          "El deposito " + depositoID + " no tiene capacidad para " + cantidad + " unidades");
     }
   }
 
