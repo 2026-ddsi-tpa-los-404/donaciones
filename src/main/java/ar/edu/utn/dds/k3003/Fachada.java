@@ -9,6 +9,7 @@ import ar.edu.utn.dds.k3003.catedra.dtos.donadoresYEntidades.QuejaDTO;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonaciones;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonadoresYEntidades;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaLogistica;
+import ar.edu.utn.dds.k3003.eventos.PublicadorEventos;
 import ar.edu.utn.dds.k3003.exceptions.DonacionNoEncontradaException;
 import ar.edu.utn.dds.k3003.exceptions.DonadorNoPuedeDonarException;
 import ar.edu.utn.dds.k3003.model.Donacion;
@@ -34,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,7 @@ public class Fachada implements FachadaDonaciones {
   private final CategoriasDataMapper categoriasDataMapper;
   private FachadaDonadoresYEntidades fachadaDonadoresYEntidades;
   private FachadaLogistica fachadaLogistica;
+  private PublicadorEventos publicadorEventos;
 
   public Fachada() {
     this.donacionesRepository = new InMemoryDonacionesRepository();
@@ -107,11 +110,13 @@ public class Fachada implements FachadaDonaciones {
     try {
       this.fachadaLogistica.gestionarDonacion(donacion.getDepositoID(), donacion.getId(), donacion.getProductoID(), donacion.getCantidad());
     } catch (RuntimeException e) {
-      // Si Logística rechaza la donación, no puede quedar registrada como INGRESADA sin depósito.
       log.warn("Logistica rechazo la donacion {}: {}. Se descarta el registro", donacion.getId(), e.getMessage());
       this.donacionesRepository.deleteById(donacion.getId());
       throw e;
     }
+
+    Donacion registrada = donacion;
+    this.publicar(publicador -> publicador.donacionActualizada(registrada));
 
     log.info("Donacion {} registrada e informada a Logistica (depositoID={})", donacion.getId(), donacion.getDepositoID());
 
@@ -143,6 +148,8 @@ public class Fachada implements FachadaDonaciones {
 
     this.cambiarEstado(donacion, estado);
     donacion = this.donacionesRepository.save(donacion);
+    Donacion actualizada = donacion;
+    this.publicar(publicador -> publicador.donacionActualizada(actualizada));
     log.info("Donacion {} cambio de estado a {}", donacionID, estado);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
@@ -175,6 +182,8 @@ public class Fachada implements FachadaDonaciones {
 
     this.cambiarEstado(donacion, EstadoDonacionEnum.CONQUEJA);
     donacion = this.donacionesRepository.save(donacion);
+    Donacion conQueja = donacion;
+    this.publicar(publicador -> publicador.donacionActualizada(conQueja));
     log.info("Queja registrada, donacion {} paso a CONQUEJA", donacionID);
     return this.donacionesDataMapper.toDonacionDTO(donacion);
   }
@@ -203,6 +212,7 @@ public class Fachada implements FachadaDonaciones {
 
     Producto producto = productosDataMapper.toProducto(productoDTO);
     this.productoRepository.save(producto);
+    this.publicar(publicador -> publicador.productoActualizado(producto));
     return productosDataMapper.toProductoDTO(producto);
   }
 
@@ -229,6 +239,8 @@ public class Fachada implements FachadaDonaciones {
     producto.setSubCategoriaID(productoDTO.categoriaID());
     producto.setIdentificadorID(productoDTO.identificadorID());
     producto = this.productoRepository.save(producto);
+    Producto actualizado = producto;
+    this.publicar(publicador -> publicador.productoActualizado(actualizado));
     return productosDataMapper.toProductoDTO(producto);
   }
 
@@ -238,6 +250,7 @@ public class Fachada implements FachadaDonaciones {
             .orElseThrow(() -> new NoSuchElementException("Producto no encontrado: " + id));
     ProductoDTO dto = productosDataMapper.toProductoDTO(producto);
     this.productoRepository.deleteById(id);
+    this.publicar(publicador -> publicador.productoEliminado(producto));
     return dto;
   }
 
@@ -308,7 +321,25 @@ public class Fachada implements FachadaDonaciones {
         this.donacionesRepository.findById(id).orElseThrow(() -> new DonacionNoEncontradaException("No existe la donacion con id: " + id));
     DonacionDTO dto = this.donacionesDataMapper.toDonacionDTO(donacion);
     this.donacionesRepository.deleteById(id);
+    this.publicar(publicador -> publicador.donacionEliminada(donacion));
     return dto;
+  }
+
+  public void publicarBajaDeTodo() {
+    this.publicar(publicador -> {
+      this.donacionesRepository.findAll().forEach(publicador::donacionEliminada);
+      this.productoRepository.findAll().forEach(publicador::productoEliminado);
+    });
+  }
+
+  public void setPublicadorEventos(PublicadorEventos publicadorEventos) {
+    this.publicadorEventos = publicadorEventos;
+  }
+
+  private void publicar(Consumer<PublicadorEventos> accion) {
+    if (this.publicadorEventos != null) {
+      accion.accept(this.publicadorEventos);
+    }
   }
 
   @Override

@@ -1,5 +1,6 @@
 package ar.edu.utn.dds.k3003.api.controller;
 
+import ar.edu.utn.dds.k3003.Fachada;
 import ar.edu.utn.dds.k3003.repositories.jpa.CategoriaJpaRepository;
 import ar.edu.utn.dds.k3003.repositories.jpa.DonacionesJpaRepository;
 import ar.edu.utn.dds.k3003.repositories.jpa.IdentificadorJpaRepository;
@@ -18,21 +19,25 @@ public class AdminController {
   private final ProductoJpaRepository productoRepository;
   private final IdentificadorJpaRepository identificadorRepository;
   private final CategoriaJpaRepository categoriaRepository;
+  private final Fachada fachada;
 
   public AdminController(
       DonacionesJpaRepository donacionesRepository,
       ProductoJpaRepository productoRepository,
       IdentificadorJpaRepository identificadorRepository,
-      CategoriaJpaRepository categoriaRepository) {
+      CategoriaJpaRepository categoriaRepository,
+      Fachada fachada) {
     this.donacionesRepository = donacionesRepository;
     this.productoRepository = productoRepository;
     this.identificadorRepository = identificadorRepository;
     this.categoriaRepository = categoriaRepository;
+    this.fachada = fachada;
   }
 
   @DeleteMapping("/reset")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void resetDatabase() {
+    fachada.publicarBajaDeTodo(); // publicacion de eventos
     donacionesRepository.deleteAll();
     productoRepository.deleteAll();
     identificadorRepository.deleteAll();

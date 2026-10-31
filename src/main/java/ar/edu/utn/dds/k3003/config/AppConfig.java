@@ -3,6 +3,7 @@ package ar.edu.utn.dds.k3003.config;
 import ar.edu.utn.dds.k3003.Fachada;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaDonadoresYEntidades;
 import ar.edu.utn.dds.k3003.catedra.fachadas.FachadaLogistica;
+import ar.edu.utn.dds.k3003.eventos.PublicadorEventos;
 import ar.edu.utn.dds.k3003.integration.DonadoresRestClient;
 import ar.edu.utn.dds.k3003.integration.LogisticaRestClient;
 import ar.edu.utn.dds.k3003.logging.TraceIdPropagationInterceptor;
@@ -51,7 +52,8 @@ public class AppConfig {
       IdentificadorJpaRepository identificadorRepository,
       CategoriaJpaRepository categoriaRepository,
       FachadaDonadoresYEntidades fachadaDonadoresYEntidades,
-      FachadaLogistica fachadaLogistica) {
+      FachadaLogistica fachadaLogistica,
+      PublicadorEventos publicadorEventos) {
     Fachada fachada =
         new Fachada(
             donacionesRepository,
@@ -60,6 +62,7 @@ public class AppConfig {
             categoriaRepository);
     fachada.setFachadaDonadoresYEntidades(fachadaDonadoresYEntidades);
     fachada.setFachadaLogistica(fachadaLogistica);
+    fachada.setPublicadorEventos(publicadorEventos);
     return fachada;
   }
 }
