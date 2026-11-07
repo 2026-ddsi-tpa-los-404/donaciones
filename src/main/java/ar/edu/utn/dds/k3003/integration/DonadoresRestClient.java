@@ -155,8 +155,8 @@ public class DonadoresRestClient implements FachadaDonadoresYEntidades {
       HttpEntity<Map<String, Integer>> entity = new HttpEntity<>(Map.of("cantidad", cantidad));
       ResponseEntity<NecesidadMaterialDTO> response =
           restTemplate.exchange(
-              baseUrl + "/necesidades/" + necesidadID + "/satisfacer",
-              HttpMethod.PATCH,
+              baseUrl + "/necesidades/" + necesidadID + "/satisfaccion",
+              HttpMethod.POST,
               entity,
               NecesidadMaterialDTO.class);
       return response.getBody();
